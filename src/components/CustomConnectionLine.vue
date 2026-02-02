@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 defineProps({
   sourceX: {
     type: Number,
@@ -16,7 +16,7 @@ defineProps({
     type: Number,
     required: true,
   },
-})
+});
 </script>
 
 <template>
@@ -29,6 +29,13 @@ defineProps({
       :d="`M${sourceX},${sourceY} C ${sourceX} ${targetY} ${sourceX} ${targetY} ${targetX},${targetY}`"
     />
 
-    <circle :cx="targetX" :cy="targetY" fill="#fff" :r="4" stroke="#6F3381" :stroke-width="1.5" />
+    <circle
+      :cx="targetX"
+      :cy="targetY"
+      fill="#fff"
+      :r="4"
+      stroke="#6F3381"
+      :stroke-width="1.5"
+    />
   </g>
 </template>

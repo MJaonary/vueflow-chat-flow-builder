@@ -1,303 +1,150 @@
-<script>
+<script lang="ts">
 // Importing vueflow specific stylesheet
 import "@vue-flow/core/dist/style.css";
 import "@vue-flow/core/dist/theme-default.css";
-
-// import default control and minimap styles
-import '@vue-flow/controls/dist/style.css';
-import '@vue-flow/minimap/dist/style.css';
-////////////////////////////////////////////.
+import "@vue-flow/minimap/dist/style.css";
+import "@vue-flow/node-resizer/dist/style.css";
 </script>
 
-<script setup>
-import { onMounted, ref } from "vue";
-import { VueFlow, useVueFlow } from "@vue-flow/core";
+<script setup lang="ts">
+import { ref, provide } from "vue";
+import type { Element } from "@vue-flow/core";
+import { useStore } from "./stores/main";
+import { useKeyboardShortcuts } from "./utils/useKeyboardShortcuts";
 
-import { Background } from '@vue-flow/background';
-import { Controls } from '@vue-flow/controls';
-import { MiniMap } from '@vue-flow/minimap';
+// Layout components
+import TopMenuBar from "./components/TopMenuBar.vue";
+import FlowControls from "./components/FlowControls.vue";
+import LeftSidebar from "./components/leftSidebar/LeftSidebar.vue";
+import RightSidebar from "./components/rightSidebar/RightSidebar.vue";
+import BottomBar from "./components/BottomBar.vue";
+import FlowCanvas from "./components/FlowCanvas.vue";
+import EditCustomNodeModal from "./components/EditCustomNodeModal.vue";
+import EditMarkdownModal from "./components/EditMarkdownModal.vue";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "./components/ui/resizable";
 
-// Initials Elements
-import { initialElements } from "./assets/initial-elements";
-
-import container from "./components/container.vue";
-
-// Manychat Copy Components.
-import startingStep from "./components/startingStep.vue";
-import facebookMessage from "./components/facebookMessage.vue";
-import messageEditorVue from "./components/messageEditor.vue";
-import messengerQuickReplyVue from "./components/messengerQuickReply.vue";
-import iframeVue from "./components/iframe.vue";
-import imageContainerVue from "./components/imageContainer.vue";
-import boxWithTitleVue from "./components/boxWithTitle.vue";
-import simpleTextVue from "./components/simpleText.vue";
-////////////////////////////////////////////.
-
-import globalMenuVue from "./components/globalMenu.vue";
-import redirectorEdgeVue from "./components/redirectorEdge.vue";
-
-// Custom Connection line and Custom Edge
-import CustomConnectionLine from "./components/CustomConnectionLine.vue";
-import customEdgeVue from "./components/customEdge.vue";
-////////////////////////////////////////////.
-
-// Externalise node creation process on Drop here
-import { createVueNode } from "./utils/createVueNode";
-////////////////////////////////////////////.
-
-// Usage of Store Pinia
-import { useStore } from "./stores/main.js";
 const store = useStore();
+const elements = ref<Element[]>([]);
+const messageToEdit = ref("");
+const editingCustomNodeId = ref<string | null>(null);
+const isEditCustomNodeModalOpen = ref(false);
+const editingMarkdownNodeId = ref<string | null>(null);
+const isEditMarkdownModalOpen = ref(false);
 
-const {
-  addEdges,
-  addNodes,
-  onConnect,
-  onPaneReady,
-  project,
-  setInteractive,
-} = useVueFlow();
+// Setup keyboard shortcuts
+useKeyboardShortcuts();
 
-// Initialize elements values here.
-// onMounted(() => {
-//   elements.value = []
-// })
-
-// Methods that helps, centering the vue.
-onPaneReady(({ fitView }) => {
-  fitView();
-});
-////////////////////////////////////////////.
-
-// The dragAndDrop function that helps creating new nodes
-// Just by dragging elements into the canvas.
-// DragOver from the Sidebars.
-const onDragOver = (event) => {
-  event.preventDefault();
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = "move";
-  }
-};
-////////////////////////////////////////////.
-
-// The onDrop event handler that is responsible for the creation
-const onDrop = (event) => {
-  // console.log(event.target.parentNode);
-  createVueNode(event, addNodes, project, store);
-};
-////////////////////////////////////////////.
-
-// OnConnect node event, there is more work to do here.
-onConnect((params) => {
-  (params.type = "custom"), (params.animated = false);
-  addEdges([params]);
-});
-////////////////////////////////////////////.
-
-// Handling Clicked message to the message editor
-// OnClick : connect message clicked to the message editor.
-const onClick = (event) => {
-  if (event.node.type == "facebook-message") {
-    if (messageToEdit.value == event.node.id) {
-      messageToEdit.value = "";
-    } else {
-      messageToEdit.value = event.node.id;
-    }
-  }
-  store.messageToEdit = messageToEdit.value;
-};
-////////////////////////////////////////////.
-
-// Implementation of a global key listener
-let onKeyUp = (event) => {
-  switch (event.key) {
-    case "AltGraph":
-      setInteractive(true);
-      break;
-
-    // Close the editor if Escape key is pressed
-    case "Escape":
-      messageToEdit.value = "";
-      break;
-
-    default:
-      break;
+// When a node is selected in the canvas, open its editor in the right sidebar.
+// Also sync selection into the store so nodes can render selected/highlight state consistently.
+const handleEditNode = (id: string) => {
+  messageToEdit.value = id;
+  if (store.layers) {
+    store.layers.messageToEdit = messageToEdit.value;
   }
 };
 
-let onKeyDown = (event) => {
-  switch (event.key) {
-    case "AltGraph":
-      setInteractive(false);
-      break;
-
-    default:
-      break;
-  }
+// Opens the fullscreen code editor modal for editing a custom node's Vue component code.
+// This is provided to child components (e.g. CustomNodeInfo) via provide/inject.
+const openCustomNodeModal = (id: string) => {
+  editingCustomNodeId.value = id;
+  isEditCustomNodeModalOpen.value = true;
 };
 
-onMounted(() => {
-  window.addEventListener("keydown", onKeyDown);
-  window.addEventListener("keyup", onKeyUp);
-});
-////////////////////////////////////////////.
+// Used by the right sidebar editor (e.g. CustomNodeInfo) to open the fullscreen code editor.
+provide("openCustomNodeModal", openCustomNodeModal);
 
-// Local variables and props declaration.
-let messageToEdit = ref("");
-const elements = ref(initialElements);
-////////////////////////////////////////////.
-
-// Removing data from the message store if delete button used
-const onChange = (event) => {
-  event.forEach((element) => {
-    if (element.type == "remove") {
-      store.layers.messages = store.layers.messages.filter((item) => {
-        return item.id != element.id;
-      });
-    }
-  });
+// Opens the fullscreen markdown editor modal for editing a markdown node's content.
+const openMarkdownModal = (id: string) => {
+  editingMarkdownNodeId.value = id;
+  isEditMarkdownModalOpen.value = true;
 };
-////////////////////////////////////////////.
+
+// Used by the right sidebar editor (MarkdownEditor) to open the fullscreen markdown editor.
+provide("openMarkdownModal", openMarkdownModal);
 </script>
 
 <template>
-  <!-- {{ store }} -->
-  <div class="d-flex" style="height: 100vh">
-    <globalMenuVue></globalMenuVue>
-
-    <div class="m-1 border" id="vue_flow" oncontextmenu="return false;" style="position: relative; width: 95%">
-      <VueFlow v-model="elements" class="customnodeflow" :snap-to-grid="true" :select-nodes-on-drag="true"
-        :only-render-visible-elements="true" :max-zoom="50" :min-zoom="0.05" @dragover="onDragOver" @drop="onDrop"
-        @nodeDoubleClick="onClick" @nodesChange="onChange">
-        <Background pattern-color="grey" gap="16" size="1.2" />
-
-        <!-- Custom Connection from example -->
-        <template #connection-line="{ sourceX, sourceY, targetX, targetY }">
-          <CustomConnectionLine :source-x="sourceX" :source-y="sourceY" :target-x="targetX" :target-y="targetY" />
-        </template>
-        <!-- Custom Connection from example -->
-
-        <!-- Custom Edge from example -->
-        <template #edge-custom="props">
-            <customEdgeVue v-bind="props" />
-          </template>
-        <!-- Custom Edge from example -->
-
-        <!-- Redirector used as a proxy, for returning edges -->
-        <template #node-redirector="props">
-            <redirectorEdgeVue v-bind="props" />
-          </template>
-        <!-- Redirector used as a proxy, for returning edges -->
-
-        <!-- Importing custom templates -->
-        <template #node-container="props">
-          <container :id="props.id" :selected="props.selected" />
-        </template>
-        <template #node-starting-step="props">
-          <startingStep :id="props.id" :selected="props.selected" />
-        </template>
-        <template #node-facebook-message="props">
-          <facebookMessage :id="props.id" :selected="props.selected" />
-        </template>
-        <template #node-quick-reply="props">
-          <messengerQuickReplyVue :id="props.id" :selected="props.selected" />
-        </template>
-        <template #node-free-mind="props">
-          <iframeVue :id="props.id" :selected="props.selected" />
-        </template>
-        <template #node-node-image="props">
-          <imageContainerVue :id="props.id" :selected="props.selected" />
-        </template>
-        <template #node-box-with-title="props">
-          <boxWithTitleVue :id="props.id" :selected="props.selected" />
-        </template>
-        <template #node-simple-text="props">
-          <simpleTextVue :id="props.id" :selected="props.selected" />
-        </template>
-        <!-- End of importing custom templates -->
-
-        <Controls />
-        <MiniMap v-show="messageToEdit === ''" />
-      </VueFlow>
+  <div
+    class="flex flex-col h-screen overflow-hidden bg-white font-sans text-base-content"
+  >
+    <!-- Top Area: Menu + Toolbar -->
+    <div class="flex flex-col flex-none z-50">
+      <TopMenuBar />
+      <FlowControls />
     </div>
 
-    <!-- Message Editor extension -->
-    <Transition name="fade">
-      <messageEditorVue v-if="messageToEdit != ''" :id="messageToEdit"></messageEditorVue>
-    </Transition>
-    <!-- Message Editor extension -->
+    <!-- Main Content Area: Left Sidebar + Canvas + Right Sidebar -->
+    <div class="flex flex-1 flex-row overflow-hidden relative">
+      <ResizablePanelGroup
+        direction="horizontal"
+        class="w-full"
+      >
+        <ResizablePanel
+          :default-size="16"
+          :min-size="15"
+          :max-size="30"
+        >
+          <LeftSidebar class="h-full w-full" />
+        </ResizablePanel>
+        <ResizableHandle
+          class="w-1 bg-gray-200 hover:bg-blue-300 transition-colors"
+        />
+        <ResizablePanel
+          :default-size="60"
+          :min-size="40"
+        >
+          <FlowCanvas
+            v-model:elements="elements"
+            class="flex-1 bg-gray-50 h-full relative"
+            :message-to-edit="messageToEdit"
+            @node-select="handleEditNode"
+          />
+        </ResizablePanel>
+        <ResizableHandle
+          class="w-1 bg-gray-200 hover:bg-blue-300 transition-colors"
+        />
+        <ResizablePanel
+          :default-size="16"
+          :min-size="15"
+          :max-size="30"
+        >
+          <RightSidebar
+            :id="messageToEdit"
+            class="h-full w-full"
+          />
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
+
+    <!-- Bottom Area: Tabs -->
+    <div class="flex-none z-50">
+      <BottomBar />
+    </div>
+
+    <!-- Edit Custom Node Modal -->
+    <EditCustomNodeModal
+      v-model:open="isEditCustomNodeModalOpen"
+      :node-id="editingCustomNodeId"
+    />
+
+    <!-- Edit Markdown Modal -->
+    <EditMarkdownModal
+      v-model:open="isEditMarkdownModalOpen"
+      :node-id="editingMarkdownNodeId"
+    />
   </div>
 </template>
 
 <style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 1s 0.1s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
+/* Global styles override if necessary for clean layout */
 html,
-body,
-#app {
+body {
   margin: 0;
-  height: 100%;
-}
-
-#app {
-  font-family: 'Roboto', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
-
-.customnodeflow button {
-  padding: 5px;
-  width: 25px;
-  height: 25px;
-  border-radius: 25px;
-  box-shadow: 0 5px 10px #0000004d;
-  cursor: pointer;
-}
-
-.customnodeflow button:hover {
-  opacity: 0.9;
-  transform: scale(105%);
-  transition: 0.25s all ease;
-}
-
-/* VueFlow Specifics */
-.vue-flow {
-  background-color: #f2f5f7;
-}
-
-/* .vue-flow__edges {
-  z-index: 9999 !important;
-} */
-
-/* Customize Handle */
-.handle {
-  cursor: pointer !important;
-}
-
-/* Select the MiniMap */
-.vue-flow__minimap {
-  border-radius: 10%;
-}
-
-/* Select Control and Control Button */
-.vue-flow__controls {
-  background-color: white;
-  padding: 0.15rem;
-  border-radius: 1rem;
-}
-
-.vue-flow__controls-button {
-  margin: 0.3rem;
-  border: 1px grey solid;
+  padding: 0;
+  overflow: hidden;
 }
 </style>

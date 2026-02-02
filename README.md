@@ -1,94 +1,158 @@
-# Facebook Messenger Flowchart
+# Messaging Bot Flowchart
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This app is an example of how to use [vue-flow](https://github.com/bcakmakoglu/vue-flow) with [Pinia](https://pinia.vuejs.org/) store, to create a flow with custom components, its main purpose is to create
-flowchart that helps to describe Facebook Messenger bot action. The flowchart and all of its data can be exported and imported to simple text file. The project is just at it's begining but many functionnality will be implemented.
+A modern, TypeScript-based flowchart builder for designing messaging bot interactions. Built with [Vue Flow](https://github.com/bcakmakoglu/vue-flow), [Pinia](https://pinia.vuejs.org/), and [Tailwind CSS](https://tailwindcss.com/), this tool provides an intuitive visual interface for creating and managing complex bot conversation flows. All flowcharts can be exported and imported as JSON files for easy sharing and version control.
 
-## How It Works
+## Features
 
-- **Nodes** can be dragged from the sidebar and dropped into the view.
-- Adding **Messenger Items** can be done using the messenger editor, to open it we just have to double click a Facebook Send Message Node.
-- All functionnality of [vue-flow](https://github.com/bcakmakoglu/vue-flow) can be used on it like all keyboards shortcuts as "BackSpace" for deleting elements and "Shift" to toogle selection so it is possible to drag many nodes at once.
+- **Modern TypeScript Stack**: Full TypeScript migration for enhanced type safety and developer experience
+- **Tailwind CSS Styling**: Modern, responsive UI with Tailwind CSS integration
+- **Dynamic Node System**: Create custom nodes with a flexible registry system
+- **Monaco Editor**: Built-in code editor for markdown and custom node editing
+- **Resizable Panels**: Intuitive workspace with draggable sidebars and canvas
+- **Context Menus**: Right-click functionality for quick node actions
+- **Multiple Node Types**: Message nodes, Markdown nodes, Tag nodes, Image containers, and more
+- **Message Editor**: Visual editor for adding text, images, cards, videos, delays, and user inputs
+- **Keyboard Shortcuts**: Full support for Vue Flow shortcuts (BackSpace to delete, Shift for multi-select)
+- **Export/Import**: Save and share flowcharts as JSON files
 
 ## Screenshoot
 
-![](./public/screenshoot.png)
+![](./public/screenshot.png)
 
-## Description of custom components
-### Primary Components
+## Node Types
 
-* `Simple Text` : A node that is used as simple text container.
-* `Box with title` : As the previous node, this one has two more inputs, and a label and a title.
-* `Container` : **[Resizable]** This components has many special features, it cas be used as a parent to other components. Dragging directly a node from the sidebar into its body will set this one as the dragged node's parent. As described in [vue-flow](https://github.com/bcakmakoglu/vue-flow) docs when a parent container move, all of it's childs will move along him, it is possible to dynamicaly set and unset the parent of a child by using the `Menu` that is displayed when the element is hovered.
-* `Redirector Edge` : The use case of this node is to redirect the edge from the right hanlde of a node to it's left Handle, so it is possible to get a better control on how the flow returns back in the diagram.
-* `Simple Iframe` : **[Resizable]** [vue-flow](https://github.com/bcakmakoglu/vue-flow) is a tool that helps us to dynamicaly move DOM elements in the view, so all elements that exists can be used as a custom node, this one is a simple iFrame that accept links as Dynamic input.
-* `Image` : **[Resizable]** It is possible to display an image directly in a custom node, as we stated earlier, the example of a Vide is shown in the secondary components inside a Facebook Message node.
-* `Starting Step` : A simple node that helps to describe a step that will trigger a Message, or everything else.
-* `Send Message` : This node displays secondary components inside it, we can toggle the `Message Editor` by double clicking the node itself.
-* `Quick Reply` : This components will display a Quick Reply like node.
+### Core Nodes
 
-#### Custom Edges
-  Edges gets its source from a Handle to point to another Handle, Edges in VueFlow is just a simple SVG, so we can create a custom Edge by creating custom SVG. VueFlow offer a great flexibility with this aproach. I tryed to handle as much case as I could and colored to red unhandled Edges cases.
+- **Message Node**: The primary node for messaging interactions. Contains multiple message items (text, images, cards, videos, etc.). Double-click to open the editor.
+- **Starting Step**: Entry point node for conversation flows
+- **Tag Node**: Label and organize different parts of your flowchart
+- **Markdown Node**: Rich text documentation node with Monaco Editor integration
+- **Image Container**: Display images directly in the flowchart
+- **Custom Node**: Create dynamic custom nodes using the built-in SFC compiler
 
-### Secondary Components
-* `Message Editor` : The message editor helps to add or to delete elements in the `Send Message` node. To open it, we can double click into a Facebook Message Node. The same action can be used to close it, or we can just use the "Esc" button.
+### Node Registry System
 
-It is worth to note that `Drag and Drop` functionnalities are enabled only in it to helps sorting the created elements. 
+The application uses a dynamic node registry that allows for easy extension and customization. New node types can be registered programmatically with their own editors and renderers. See `DYNAMIC_NODES.md` for implementation details.
 
-This is the lists of all components available as Facebook Message : 
+### Custom Edges
 
-  - `Simple Message Text` : We can add up to three buttons. 
-  - `Image` : With two inputs, one of them is an input source, if filled, it will change the image by the one which the url is redirecting to, and a button.
-  - `Card` : Similar to the image, but it has three inputs, a source, a title and a subtitle. It has also three buttons and a default action.
-  - `Audio, File, Delay, UserInput, Dynamic` : These three elements are just a simple input with some styles and logos.
-  - `Video` : This one can take a video url as an input, so it can play it directly in the flowchart.
+Custom edges are rendered as SVG paths with intelligent styling. The edge system handles various connection scenarios and provides visual feedback for different connection states.
 
-More informations on the messenger custom message that Facebook Messenger API expose can be found on their official documentation : 
-[Meta For Developers](https://developers.facebook.com/docs/messenger-platform/reference/send-api/).
+## Message Components
 
-:point_up: This another program also written in [Vue.js](https://vuejs.org/) was created to make the process of creating all types of message as a JSON less painfull :wink: : [fb-send-api-helper](https://github.com/MJaonary/fb-send-api-helper).
+The Message Editor provides a rich set of components for building messaging interactions. Access it by selecting a Message Node.
 
-## Menu Functionalities
-When we hover an node, a little menu will always apear at the top of the components :
+### Available Message Types
 
-* `Color Picker` : It can be used to change the color attribute of nodes by dynamicaly choosing a custom color.
-* `Delete Icon` : Instead of the VueFlow default delete function by directly pressing "BackSpace", we can use this menu button to trigger the same action.
-* `Copy Icon` : A node can be duplicated by pressing this button, the result is a different element, with the same type and the same content.
-* `Setting Icon` : `Container` It was stated before that a container can act as a parent for one or many node, we can dynamicaly assign or remove a parent from the menu with this option.
+- **Text Message**: Simple text with support for up to three action buttons
+- **Image**: Display images with optional button actions
+- **Card**: Rich card format with image, title, subtitle, three buttons, and default action
+- **Video**: Embed and play videos directly in the flowchart
+- **Audio**: Audio message component
+- **File**: File attachment representation
+- **Delay**: Add timed delays between messages
+- **User Input**: Capture user responses
+- **Dynamic**: Dynamic content placeholder
+
+### Editor Features
+
+- **Visual Editor**: Right sidebar displays context-aware editors for selected nodes
+- **Drag & Drop**: Reorder message items within the message editor
+- **Live Preview**: See changes in real-time as you edit
+
+## User Interface
+
+### Layout
+
+- **Left Sidebar**: Node templates that can be dragged onto the canvas
+- **Canvas**: Main workspace with zoom, pan, and node manipulation
+- **Right Sidebar**: Context-aware editors for selected nodes
+- **Top Menu Bar**: Save, restore, import, and export functionality
+- **Bottom Bar**: Flow controls and additional tools
+
+### Context Menu
+
+Right-click on any node to access quick actions:
+
+- **Duplicate**: Create a copy of the selected node
+- **Delete**: Remove the node from the canvas
+- **Edit**: Open the dedicated editor for the node type
+
+### Resizable Panels
+
+The workspace uses resizable panels that can be adjusted by dragging the panel dividers, allowing you to customize your workspace layout.
 
 ## Save - Restore - Import - Export
-These four functionnality helps to save localy and share the generated flowchart.
-* `Save` : This option will save the current state of the flowchart to the localStorage.
-* `Restore` : The Restore option work with the `Save` one, to restore directly the latest saved state by replacing all of it.
-* `Export` : When this option is choosen, the latest state will be exported to a filen, in this case, downloaded.
-* `Import` : A valid exported file can be imported and stored as a new saved state that we can `Restore`.
+
+These four functionalities help to save locally and share the generated flowchart.
+
+- **Save**: This option will save the current state of the flowchart to the localStorage.
+- **Restore**: The Restore option works with the `Save` one, to restore directly the latest saved state by replacing all of it.
+- **Export**: When this option is chosen, the latest state will be exported to a file, in this case, downloaded.
+- **Import**: A valid exported file can be imported and stored as a new saved state that we can `Restore`.
 
 ## Project Setup
 
-The project is a Vuejs app created using Vite.
+This is a Vue 3 + TypeScript application built with Vite.
+
+### Prerequisites
+
+- Node.js 16+ or Bun
+- npm or bun package manager
+
+### Installation
 
 ```sh
 npm install
+# or
+bun install
 ```
 
-### Compile and Hot-Reload for Development
+### Development
+
+Compile and hot-reload for development:
 
 ```sh
 npm run dev
+# or
+bun run dev
 ```
 
-### Compile and Minify for Production
+### Production Build
+
+Compile and minify for production:
 
 ```sh
 npm run build
+# or
+bun run build
 ```
 
-## 💝 Special Thanks
+### Linting
 
-This project is built with
+```sh
+npm run lint
+# or
+bun run lint
+```
 
-- [vue-flow](https://github.com/bcakmakoglu/vue-flow)
-  - Vue flow made possible building this tool by simplifing everything.
+## Tech Stack
 
-- [vue-smooth-dnd](https://github.com/kutlugsahin/vue-smooth-dnd)
-  - This tools helped with the Drag and Drop Functionality. 
+This project is built with:
+
+- **[Vue 3](https://vuejs.org/)** - Progressive JavaScript framework
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development
+- **[Vite](https://vitejs.dev/)** - Fast build tool and dev server
+- **[Vue Flow](https://github.com/bcakmakoglu/vue-flow)** - Flowchart and diagram library
+- **[Pinia](https://pinia.vuejs.org/)** - State management
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[shadcn-vue](https://www.shadcn-vue.com/)** - UI component library
+- **[Monaco Editor](https://microsoft.github.io/monaco-editor/)** - Code editor
+- **[Radix Vue](https://www.radix-vue.com/)** - Unstyled, accessible UI primitives
+- **[Lucide Icons](https://lucide.dev/)** - Beautiful icon set
+
+## License
+
+MIT License - see LICENSE file for details 
